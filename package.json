@@ -1,0 +1,36 @@
+{
+  "name": "@edgegames/kit",
+  "version": "0.1.0",
+  "description": "Five sellable web games — Surge, Andar Bahar, Helix, Lattice, Cipher (each own URL)",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/edge-casino.js",
+  "module": "./dist/edge-casino.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/edge-casino.js"
+    },
+    "./style.css": "./dist/edge-casino.css"
+  },
+  "scripts": {
+    "dev": "vite --config vite.playground.config.ts",
+    "surge:server": "tsx playground/surge-server.ts",
+    "surge": "tsx playground/surge-server.ts",
+    "build": "tsc --noEmit && vite build && vite build --config vite.playground.config.ts",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --config vite.playground.config.ts --port 5210"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.8.3",
+    "vite": "^7.1.5",
+    "vite-plugin-dts": "^4.5.4"
+  },
+  "dependencies": {
+    "ws": "^8.22.1"
+  }
+}

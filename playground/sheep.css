@@ -1,0 +1,852 @@
+/* Sheep Fight — 5-lane pastoral battler (production UI) */
+
+:root {
+  --wood: #6b4428;
+  --wood-light: #8b5a32;
+  --wood-dark: #3d2414;
+  --wood-grain: #a06a3c;
+  --hp: #5fd13a;
+  --hp-low: #e8c44a;
+  --hp-crit: #e85a4a;
+  --grass-a: #58b83e;
+  --grass-b: #4aa534;
+  --grass-c: #66c448;
+  --lane-line: rgba(255, 255, 255, 0.22);
+  --sky-top: #6eb8ef;
+  --sky-bot: #b8e4ff;
+  --ink: #2a1a0e;
+  --cream: #fff8e8;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --display: 'Fraunces', Georgia, serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #1a2e12;
+  font-family: var(--font);
+  color: var(--cream);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.sf-app {
+  height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Sky only on top; solid dark green body so trays/board don't fight scenery */
+  background:
+    linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bot) 14%, transparent 14%),
+    linear-gradient(180deg, #2f6b28 0%, #245820 40%, #1c4a1a 100%);
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.sf-app.dragging {
+  cursor: grabbing;
+}
+
+/* —— Scenic top —— */
+.sf-sky {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 12%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.sf-hill {
+  position: absolute;
+  bottom: -8%;
+  left: -10%;
+  right: -10%;
+  height: 55%;
+  background: #5fb848;
+  border-radius: 50% 50% 0 0;
+}
+
+.sf-tree {
+  position: absolute;
+  bottom: 18%;
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-bottom: 42px solid #2f8a3a;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.15));
+}
+
+.sf-tree::after {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 28px;
+  width: 8px;
+  height: 14px;
+  background: #6b4428;
+}
+
+.sf-rock {
+  position: absolute;
+  bottom: 12%;
+  width: 36px;
+  height: 22px;
+  background: #8b6bb0;
+  border-radius: 40% 40% 30% 30%;
+  box-shadow: inset -4px -4px 0 rgba(0, 0, 0, 0.15);
+}
+
+.sf-cloud {
+  position: absolute;
+  background: #fff;
+  border-radius: 40px;
+  opacity: 0.9;
+  animation: sf-drift 28s linear infinite;
+}
+
+@keyframes sf-drift {
+  from {
+    transform: translateX(-20px);
+  }
+  to {
+    transform: translateX(40px);
+  }
+}
+
+/* —— HUD bars —— */
+.sf-hud-top,
+.sf-hud-bot {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+}
+
+.sf-hud-bot {
+  margin-top: auto;
+  padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+}
+
+.sf-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid var(--wood-light);
+  background:
+    radial-gradient(circle at 35% 30%, #fff 0 12%, transparent 13%),
+    linear-gradient(160deg, #f0c8a0, #d4a07a);
+  box-shadow:
+    0 0 0 2px var(--wood-dark),
+    0 4px 10px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.sf-avatar.enemy {
+  background:
+    radial-gradient(circle at 35% 30%, #fff 0 12%, transparent 13%),
+    linear-gradient(160deg, #e8b898, #c88868);
+}
+
+.sf-avatar::after {
+  content: '';
+  position: absolute;
+  inset: 8px 10px auto;
+  height: 18px;
+  background: var(--ink);
+  border-radius: 40%;
+  opacity: 0.15;
+}
+
+.sf-bar-wrap {
+  position: relative;
+}
+
+.sf-nameplate {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  padding: 0.12rem 0.55rem;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--wood-light), var(--wood));
+  border: 1px solid var(--wood-dark);
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cream);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.sf-hp-frame {
+  height: 22px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--wood-dark), #2a160c);
+  border: 2px solid var(--wood-light);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 2px 0 rgba(255, 255, 255, 0.08);
+  padding: 3px;
+  position: relative;
+}
+
+.sf-hp-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #8fff55, var(--hp) 45%, #3aa820);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transform-origin: left center;
+  transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sf-hp-fill.low {
+  background: linear-gradient(180deg, #ffe066, var(--hp-low) 50%, #c99920);
+}
+
+.sf-hp-fill.crit {
+  background: linear-gradient(180deg, #ff8a7a, var(--hp-crit) 50%, #b03028);
+  animation: sf-hp-pulse 0.7s ease-in-out infinite;
+}
+
+@keyframes sf-hp-pulse {
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+.sf-hp-pct {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— Board —— */
+.sf-board-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  z-index: 5;
+  /* Clear the side trays (~56px + pad) so lane sheep never sit under the set */
+  margin: 0 4.75rem;
+  display: flex;
+}
+
+.sf-tray {
+  position: absolute;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  padding: 0.35rem 0.28rem;
+  justify-content: center;
+  width: 4.15rem;
+  /* Wood rail — fully outside the grass board */
+  background: linear-gradient(180deg, rgba(70, 42, 22, 0.92), rgba(40, 24, 12, 0.94));
+  border: 2px solid rgba(160, 110, 60, 0.55);
+  border-radius: 40px;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  pointer-events: auto;
+}
+
+.sf-tray-p1 {
+  left: 0.2rem;
+  bottom: 5.2rem;
+  top: auto;
+}
+
+.sf-tray-p2 {
+  right: 0.2rem;
+  top: 5.2rem;
+  bottom: auto;
+}
+
+.sf-tray-p2.ai-locked,
+.sf-tray-p2.hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.sf-zone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sf-zone-p2,
+.sf-zone-p1 {
+  display: none; /* quieter board — no zone tint wash */
+}
+
+/* Wood finish rails (reference-style goal lines) */
+.sf-finish {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  height: 18px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(180deg, #8b5a32 0%, #6b4428 45%, #4a2e18 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 160, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  border-top: 2px solid #a06a3c;
+  border-bottom: 2px solid #3d2414;
+}
+
+.sf-finish-top {
+  top: 0;
+}
+
+.sf-finish-bot {
+  bottom: 0;
+}
+
+.sf-finish-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(255, 236, 180, 0.55);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.sf-finish.hit {
+  animation: sf-finish-hit 0.35s ease-out;
+}
+
+.sf-finish.hit .sf-finish-label {
+  color: rgba(255, 248, 200, 0.9);
+}
+
+@keyframes sf-finish-hit {
+  0% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.25);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.sf-avatar canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: block;
+}
+
+.sf-avatar {
+  overflow: hidden;
+  background: linear-gradient(160deg, #f0c8a0, #d4a07a) !important;
+}
+
+.sf-avatar::after {
+  display: none !important;
+}
+
+.sf-unit-btn {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 3px solid var(--wood-light);
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.25), transparent 40%),
+    linear-gradient(160deg, var(--wood-grain), var(--wood-dark));
+  box-shadow:
+    0 0 0 2px var(--wood-dark),
+    0 4px 8px rgba(0, 0, 0, 0.35),
+    inset 0 2px 0 rgba(255, 255, 255, 0.15);
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+  padding: 0;
+  transition:
+    transform 0.12s,
+    box-shadow 0.15s,
+    filter 0.15s;
+}
+
+.sf-unit-btn.dim {
+  filter: grayscale(0.75) brightness(0.65);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.sf-unit-btn:not(.dim):active {
+  transform: scale(0.94);
+}
+
+.sf-app.dragging .sf-unit-btn {
+  cursor: grabbing;
+}
+
+.sf-unit-btn.sel {
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 5px var(--wood-light),
+    0 0 18px rgba(255, 255, 200, 0.55);
+  transform: scale(1.06);
+}
+
+.sf-unit-btn .sf-cost {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #f5d76e;
+  color: var(--ink);
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid #c9a030;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.sf-unit-btn canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.sf-board {
+  position: relative;
+  flex: 1;
+  isolation: isolate;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 4px solid #5a3a1e;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2),
+    0 10px 28px rgba(0, 0, 0, 0.35);
+  /* Exactly 5 lanes + thin light dividers (match reference) */
+  background: linear-gradient(
+    90deg,
+    #4fb838 0%,
+    #4fb838 19.2%,
+    #8fd85a 19.2%,
+    #8fd85a 20.8%,
+    #3d9a2c 20.8%,
+    #3d9a2c 39.2%,
+    #8fd85a 39.2%,
+    #8fd85a 40.8%,
+    #4fb838 40.8%,
+    #4fb838 59.2%,
+    #8fd85a 59.2%,
+    #8fd85a 60.8%,
+    #3d9a2c 60.8%,
+    #3d9a2c 79.2%,
+    #8fd85a 79.2%,
+    #8fd85a 80.8%,
+    #4fb838 80.8%,
+    #4fb838 100%
+  );
+}
+
+.sf-board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 18px,
+      rgba(0, 0, 0, 0.04) 18px,
+      rgba(0, 0, 0, 0.04) 19px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 30%, rgba(0, 0, 0, 0.08));
+}
+
+.sf-board::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Soft vignette so sheep pop off grass */
+  box-shadow: inset 0 0 48px rgba(20, 60, 15, 0.25);
+}
+
+.sf-lanes {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  z-index: 5;
+  touch-action: none;
+}
+
+.sf-lane {
+  position: relative;
+  cursor: pointer;
+}
+
+.sf-lane.hot,
+.sf-lane.drop {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+}
+
+.sf-lane.drop-p1 {
+  background: rgba(120, 220, 255, 0.2);
+}
+
+.sf-lane.drop-p2 {
+  background: rgba(255, 170, 80, 0.22);
+}
+
+/* Soft fight tint — no pulse */
+.sf-lane.fight {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sf-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3; /* under lanes hit targets, above grass */
+  pointer-events: none;
+}
+
+.sf-ghost {
+  position: fixed;
+  z-index: 100;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
+  border-radius: 50%;
+  pointer-events: none;
+  display: none;
+  border: 3px solid #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  background: rgba(60, 40, 20, 0.85);
+  overflow: hidden;
+}
+
+.sf-ghost.on {
+  display: block;
+}
+
+.sf-ghost canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* —— Mana / energy —— */
+.sf-mana {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.35rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(42, 26, 14, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: fit-content;
+}
+
+.sf-mana-top {
+  margin-top: 0.3rem;
+}
+
+.sf-mana i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.sf-mana i.on {
+  background: radial-gradient(circle at 30% 30%, #fff59a, #f0c020);
+  box-shadow: 0 0 8px rgba(240, 192, 32, 0.7);
+}
+
+/* —— Emote / overlays —— */
+.sf-emote {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 5.5rem;
+  z-index: 25;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--wood-light);
+  background: linear-gradient(160deg, #ffe566, #f0b820);
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.sf-emote:active {
+  transform: scale(0.92);
+}
+
+.sf-float-emote {
+  position: absolute;
+  z-index: 30;
+  font-size: 2rem;
+  pointer-events: none;
+  animation: sf-float-up 1.2s ease-out forwards;
+}
+
+@keyframes sf-float-up {
+  from {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-80px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.sf-banner {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%) scale(0.8);
+  z-index: 40;
+  padding: 0.75rem 1.4rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--wood-light), var(--wood-dark));
+  border: 3px solid #f5d76e;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.sf-banner.show {
+  animation: sf-banner-in 0.45s cubic-bezier(0.2, 1.2, 0.3, 1) forwards;
+}
+
+@keyframes sf-banner-in {
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.sf-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  z-index: 15;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(42, 26, 14, 0.7);
+  font-size: 0.78rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.sf-hint.show {
+  opacity: 1;
+}
+
+.sf-hand {
+  position: absolute;
+  z-index: 16;
+  font-size: 2rem;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+  animation: sf-tap 1s ease-in-out infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sf-hand.show {
+  opacity: 1;
+}
+
+@keyframes sf-tap {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.sf-topbar {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.55rem;
+  z-index: 30;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.sf-mini {
+  border: 2px solid var(--wood-light);
+  background: linear-gradient(180deg, var(--wood-grain), var(--wood-dark));
+  color: var(--cream);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sf-mini a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sf-start-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(20, 40, 15, 0.55);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.sf-start-card {
+  width: min(100%, 320px);
+  padding: 1.5rem 1.25rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #8b5a32, #3d2414);
+  border: 3px solid #f5d76e;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.sf-start-card h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--display);
+  font-size: 1.85rem;
+  color: #fff;
+}
+
+.sf-start-card p {
+  margin: 0 0 1.1rem;
+  font-size: 0.88rem;
+  color: rgba(255, 248, 232, 0.85);
+  line-height: 1.4;
+}
+
+.sf-mode-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.sf-start-go,
+.sf-start-alt {
+  border: none;
+  border-radius: 14px;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.sf-start-go {
+  background: linear-gradient(180deg, #9fff55, #4ecf2a);
+  color: #143010;
+  box-shadow: 0 6px 0 #2a8a18, 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.sf-start-alt {
+  background: linear-gradient(180deg, #8b5a32, #5a3a20);
+  color: #fff8e8;
+  border: 2px solid #f5d76e;
+}
+
+.sf-start-go:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 #2a8a18, 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sf-help {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.45 !important;
+  opacity: 0.85;
+}
+
+.sf-bar-wrap {
+  min-width: 0;
+}
+
+.sf-shake {
+  animation: sf-shake 0.2s ease-out;
+}
+
+@keyframes sf-shake {
+  0% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(-1.5px);
+  }
+  70% {
+    transform: translateX(1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
