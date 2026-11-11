@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npx vite build --config vite.playground.config.ts",
+  "outputDirectory": "dist-playground",
+  "framework": null,
+  "rewrites": [
+    { "source": "/", "destination": "/sheep.html" }
+  ]
+}
