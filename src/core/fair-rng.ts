@@ -38,10 +38,10 @@ export async function fairFloat(
 ): Promise<number> {
   const material = `edge:v1|${serverSeed}|${clientSeed}|${nonce}|${lane}`;
   const hex = await sha256Hex(material);
-  // Take 13 hex chars → ~52 bits → [0,1)
+  // 13 hex chars = 52 bits → normalize to [0, 1)
   const slice = hex.slice(0, 13);
   const n = Number.parseInt(slice, 16);
-  return n / 0x1_0000_0000_0000; // 2^48
+  return n / 0x10_0000_0000_0000; // 2^52
 }
 
 export async function fairInt(

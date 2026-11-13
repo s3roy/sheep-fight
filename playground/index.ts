@@ -2,6 +2,20 @@ import '../src/ui/styles.css';
 
 const games = [
   {
+    href: '/chicken.html',
+    name: 'Chicken Road',
+    blurb: 'Lane cashout · GO or CASH OUT.',
+    tag: 'Popular style',
+    accent: 'var(--ec-mint)',
+  },
+  {
+    href: '/spark.html',
+    name: 'Spark Trail',
+    blurb: 'Lane-step cashout · original neon pads · GO or cash out.',
+    tag: 'Inspired · Original',
+    accent: 'var(--ec-gold)',
+  },
+  {
     href: '/surge.html',
     name: 'Surge',
     blurb: 'Host-authoritative crash · WebSocket rounds.',

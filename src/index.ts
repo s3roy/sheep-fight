@@ -5,8 +5,24 @@ export * from './core/helix/engine';
 export * from './core/lattice/engine';
 export * from './core/cipher/engine';
 export * from './core/sheep/engine';
+export * from './core/chicken/engine';
+export * from './core/spark/engine';
 
 export const GAMES = [
+  {
+    id: 'chicken',
+    name: 'Chicken Road',
+    tag: 'Popular · Crash step',
+    popular: true,
+    blurb: 'Lane-by-lane chicken cashout. Easy → Hardcore ladders, GO or CASH OUT.',
+  },
+  {
+    id: 'spark',
+    name: 'Spark Trail',
+    tag: 'Inspired · Crash step',
+    popular: true,
+    blurb: 'Lane-cashout type — original neon trail. Step pads, GO or cash out before the snap.',
+  },
   {
     id: 'surge',
     name: 'Surge',

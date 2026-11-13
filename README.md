@@ -1,4 +1,4 @@
-# Game kit (5 titles)
+# Game kit
 
 Each game is a **standalone demo URL** — sell / embed one at a time (same idea as Ludo).
 
@@ -12,22 +12,28 @@ npm run dev
 
 | Game | URL |
 |------|-----|
+| **Chicken Road** | http://localhost:5210/chicken.html |
+| **Spark Trail** | http://localhost:5210/spark.html |
 | **Surge** | http://localhost:5210/surge.html |
 | **Andar Bahar** | http://localhost:5210/andar.html |
 | **Helix** | http://localhost:5210/helix.html |
 | **Lattice** | http://localhost:5210/lattice.html |
 | **Cipher** | http://localhost:5210/cipher.html |
+| **Sheep Fight** | http://localhost:5210/sheep.html |
 | Catalog | http://localhost:5210/ |
 
 ## What’s inside
 
 | Game | Pitch | Hard to clone |
 |------|-------|----------------|
+| Chicken Road | Lane-step cashout | Fair crash lane + difficulty ladders |
+| Spark Trail | Inspired lane-cashout (original art + synth audio) | Original ladders + snap pads + canvas runner |
 | Surge | Crash cashout + twin curve | House-edge fair float + trail lane |
 | Andar Bahar | Joker match + Pulse-3 | Fair shoe shuffle |
 | Helix | Dual-rail sector drop | Phase-locked gate masks |
 | Lattice | Hex multiplier path | Axial graph + collapse FSM |
 | Cipher | Three dials | Coupled mods 11·13·17 |
+| Sheep Fight | 5-lane sheep vs deer | Fair clash resolve |
 
 Engines live under `src/core/<game>/`. Playground pages under `playground/<game>.html`.
 

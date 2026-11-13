@@ -25,6 +25,8 @@ export default defineConfig({
         lattice: resolve(root, 'lattice.html'),
         cipher: resolve(root, 'cipher.html'),
         sheep: resolve(root, 'sheep.html'),
+        chicken: resolve(root, 'chicken.html'),
+        spark: resolve(root, 'spark.html'),
       },
     },
   },
